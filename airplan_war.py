@@ -33,6 +33,7 @@ class Player (pygame.sprite.Sprite):
             self.rect.topleft = init_pos # Initialize the upper left corner coordinates of the rectangle
             self.speed = 8 # Initialize the player speed, here is a definite value.
             self.img_index = 0 # Player Wizard Image Index
+            self.bullets = pygame.sprite.Group() # Collection of bullets fired by the player's aircraft
 
     def moveUp (self):
         if self.rect.top <= 0:
@@ -58,17 +59,9 @@ class Player (pygame.sprite.Sprite):
         else:
             self.rect.left += self.speed
 
-
-# Définir les paramètres liés au joueur
-player_rect = []
-player_rect.append(pygame.Rect(0, 99, 102, 126)) # Zone d'image du sprite du joueur
-player_rect.append(pygame.Rect(165, 360, 102, 126))
-player_rect.append(pygame.Rect(165, 234, 102, 126)) # Zone d'image du sprite d'explosion du joueur
-player_rect.append(pygame.Rect(330, 624, 102, 126))
-player_rect.append(pygame.Rect(330, 498, 102, 126))
-player_rect.append(pygame.Rect(432, 624, 102, 126))
-player_pos = [200, 600]
-player = Player(plane_img, player_rect, player_pos)
+    def shoot (self, bullet_img):
+        bullet = Bullet (bullet_img, self.rect.midtop)
+        self.bullets.add (bullet)
 
 # Enemy class
 class Enemy(pygame.sprite.Sprite):
@@ -83,6 +76,29 @@ class Enemy(pygame.sprite.Sprite):
     def move (self):
         self.rect.top += self.speed
 
+# Bullet
+class Bullet (pygame.sprite.Sprite):
+    def __init__(self, bullet_img, init_pos):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = bullet_img
+        self.rect = self.image.get_rect()
+        self.rect.midbottom = init_pos
+        self.speed = 10 
+    def move (self):
+        self.rect.top -= self.speed
+
+
+# Définir les paramètres liés au joueur
+player_rect = []
+player_rect.append(pygame.Rect(0, 99, 102, 126)) # Zone d'image du sprite du joueur
+player_rect.append(pygame.Rect(165, 360, 102, 126))
+player_rect.append(pygame.Rect(165, 234, 102, 126)) # Zone d'image du sprite d'explosion du joueur
+player_rect.append(pygame.Rect(330, 624, 102, 126))
+player_rect.append(pygame.Rect(330, 498, 102, 126))
+player_rect.append(pygame.Rect(432, 624, 102, 126))
+player_pos = [200, 600]
+player = Player(plane_img, player_rect, player_pos)
+
 
 # Définir les paramètres liés à la surface utilisés par l'objet avion ennemi
 enemy1_rect = pygame.Rect(534, 612, 57, 43)
@@ -90,6 +106,13 @@ enemy1_img = plane_img.subsurface(enemy1_rect)
 enemies1 = pygame.sprite.Group()
 enemy_frequency = 0
 
+
+bullet_sound = pygame.mixer.Sound('resources/sound/bullet.wav')
+bullet_sound.set_volume(0.3)
+# Définir les paramètres liés à la surface utilisés par l'objet puce (bullets)
+bullet_rect = pygame.Rect(1004, 987, 9, 21)
+bullet_img = plane_img.subsurface(bullet_rect)
+shoot_frequency = 0
 
 clock = pygame.time.Clock()
 running = True
@@ -121,6 +144,23 @@ while running:
         if enemy.rect.top > SCREEN_HEIGHT:
             enemies1.remove(enemy)
     enemies1.draw(screen)
+
+    # Contrôler la fréquence des tirs de balles et des balles de feu
+    if shoot_frequency % 15 == 0:
+        bullet_sound.play()
+        player.shoot(bullet_img)
+    shoot_frequency += 1
+    if shoot_frequency >= 15:
+        shoot_frequency = 0
+
+    # Draw the bullets
+    player.bullets.draw(screen)
+
+    # Déplacer la puce, la supprimer si elle dépasse le cadre de la fenêtre
+    for bullet in player.bullets:
+        bullet.move()
+        if bullet.rect.bottom < 0:
+            player.bullets.remove(bullet)
 
     # Update the screen
     pygame.display.update()
