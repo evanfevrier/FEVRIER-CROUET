@@ -46,3 +46,13 @@ while running:
             pygame.quit()
             exit()
 
+        # Monitor keyboard events
+        key_pressed = pygame.key.get_pressed()
+        if key_pressed[K_UP]:
+            player_pos[1] -= 3
+        if key_pressed[ K_DOWN]:
+            player_pos[1] += 3
+        if key_pressed[K_LEFT]:
+            player_pos[0] -= 3
+        if key_pressed[K_RIGHT]:
+            player_pos[0] += 3
