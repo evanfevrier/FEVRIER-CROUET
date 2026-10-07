@@ -22,6 +22,54 @@ player = plane_img.subsurface(player_rect)
 player_pos = [200, 600]
 
 
+# Player
+class Player (pygame.sprite.Sprite):
+    def __init__(self, plane_img, player_rect, init_pos):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = [] # List of pictures of player object wizard
+        for i in range(len(player_rect)):
+            self.image.append(plane_img.subsurface(player_rect[i]).convert_alpha())
+            self.rect = player_rect[0] # Initialize the rectangle where the picture is located
+            self.rect.topleft = init_pos # Initialize the upper left corner coordinates of the rectangle
+            self.speed = 8 # Initialize the player speed, here is a definite value.
+            self.img_index = 0 # Player Wizard Image Index
+
+    def moveUp (self):
+        if self.rect.top <= 0:
+            self.rect.top = 0
+        else:
+            self.rect.top -= self.speed
+    
+    def moveDown(self):
+        if self.rect.top >= SCREEN_HEIGHT - self.rect.height:
+            self.rect.top = SCREEN_HEIGHT - self.rect.height
+        else:
+            self.rect.top += self.speed
+    
+    def moveLeft (self):
+        if self.rect.left <= 0:
+            self.rect.left = 0
+        else:
+            self.rect.left -= self.speed
+    
+    def moveRight (self):
+        if self.rect.left >= SCREEN_WIDTH - self.rect.width:
+            self.rect.left = SCREEN_WIDTH - self.rect.width
+        else:
+            self.rect.left += self.speed
+
+
+# Définir les paramètres liés au joueur
+player_rect = []
+player_rect.append(pygame.Rect(0, 99, 102, 126)) # Zone d'image du sprite du joueur
+player_rect.append(pygame.Rect(165, 360, 102, 126))
+player_rect.append(pygame.Rect(165, 234, 102, 126)) # Zone d'image du sprite d'explosion du joueur
+player_rect.append(pygame.Rect(330, 624, 102, 126))
+player_rect.append(pygame.Rect(330, 498, 102, 126))
+player_rect.append(pygame.Rect(432, 624, 102, 126))
+player_pos = [200, 600]
+player = Player(plane_img, player_rect, player_pos)
+
 # Enemy class
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, enemy_img, init_pos):
@@ -55,7 +103,8 @@ while running:
     screen.blit (background, (0, 0))
 
     # Draw an airplane
-    screen.blit (player, player_pos)
+    # screen.blit (player, player_pos)
+    screen.blit(player.image[player.img_index], player.rect)
 
     # Faire apparaître des avions ennemis : 
     if enemy_frequency % 50 == 0:
@@ -84,11 +133,11 @@ while running:
 
         # Monitor keyboard events
         key_pressed = pygame.key.get_pressed()
-        if key_pressed[K_UP]:
-            player_pos[1] -= 3
-        if key_pressed[ K_DOWN]:
-            player_pos[1] += 3
-        if key_pressed[K_LEFT]:
-            player_pos[0] -= 3
-        if key_pressed[K_RIGHT]:
-            player_pos[0] += 3
+        if key_pressed[K_w] or key_pressed[K_UP]:
+            player.moveUp()
+        if key_pressed[K_s] or key_pressed[K_DOWN]:
+            player.moveDown()
+        if key_pressed[K_a] or key_pressed[K_LEFT]:
+            player.moveLeft()
+        if key_pressed[K_d] or key_pressed[K_RIGHT]:
+            player.moveRight()
