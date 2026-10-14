@@ -131,6 +131,7 @@ game_over_sound.set_volume(0.3)
 bullet_rect = pygame.Rect(1004, 987, 9, 21)
 bullet_img = plane_img.subsurface(bullet_rect)
 shoot_frequency = 0
+score = 0
 
 clock = pygame.time.Clock()
 running = True
@@ -142,6 +143,13 @@ while running:
     # Draw the background
     screen.fill(0)
     screen.blit(background, (0, 0))
+
+    # dessiner le score
+    score_font = pygame.font.Font(None, 36)
+    score_text = score_font.render(str(score), True, (128, 128, 128))
+    text_rect = score_text.get_rect()
+    text_rect.topleft = [10, 10]
+    screen.blit(score_text, text_rect)
 
     # dessiner l'avion du joueur
     if not player.is_hit:
@@ -189,7 +197,7 @@ while running:
             enemy1_down_sound.play()
         if enemy_down.down_index > 7:
             enemies_down.remove(enemy_down)
-            # score += 1000
+            score += 1000
             continue
         screen.blit(enemy_down.down_imgs[enemy_down.down_index // 2], enemy_down.rect)
         enemy_down.down_index += 1
@@ -231,8 +239,13 @@ while running:
         if key_pressed[K_d] or key_pressed[K_RIGHT]:
             player.moveRight()
 
+font = pygame.font.Font(None, 48)
+text = font.render('Score: '+ str(score), True, (255, 0, 0))
+text_rect = text.get_rect()
+text_rect.centerx = screen.get_rect().centerx
+text_rect.centery = screen.get_rect().centery + 24
 screen.blit(game_over, (0, 0))
-
+screen.blit(text, text_rect)
 while 1:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
