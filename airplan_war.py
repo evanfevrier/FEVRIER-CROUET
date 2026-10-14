@@ -34,8 +34,9 @@ class Player (pygame.sprite.Sprite):
             self.speed = 8 # Initialize the player speed, here is a definite value.
             self.img_index = 0 # Player Wizard Image Index
             self.bullets = pygame.sprite.Group() # Collection of bullets fired by the player's aircraft
+            self.is_hit = False # Is the player hit?
 
-    def moveUp (self):
+    def moveUp(self):
         if self.rect.top <= 0:
             self.rect.top = 0
         else:
@@ -47,25 +48,25 @@ class Player (pygame.sprite.Sprite):
         else:
             self.rect.top += self.speed
     
-    def moveLeft (self):
+    def moveLeft(self):
         if self.rect.left <= 0:
             self.rect.left = 0
         else:
             self.rect.left -= self.speed
     
-    def moveRight (self):
+    def moveRight(self):
         if self.rect.left >= SCREEN_WIDTH - self.rect.width:
             self.rect.left = SCREEN_WIDTH - self.rect.width
         else:
             self.rect.left += self.speed
 
-    def shoot (self, bullet_img):
+    def shoot(self, bullet_img):
         bullet = Bullet (bullet_img, self.rect.midtop)
         self.bullets.add (bullet)
 
 # Enemy class
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, enemy_img,enemy_down_imgs,init_pos):
+    def __init__(self, enemy_img, enemy_down_imgs, init_pos):
         pygame.sprite.Sprite.__init__(self)
         self.image = enemy_img
         self.rect = self.image.get_rect()
@@ -74,18 +75,18 @@ class Enemy(pygame.sprite.Sprite):
         self.speed = 2
         self.down_index = 0
 
-    def move (self):
+    def move(self):
         self.rect.top += self.speed
 
 # Bullet
-class Bullet (pygame.sprite.Sprite):
+class Bullet(pygame.sprite.Sprite):
     def __init__(self, bullet_img, init_pos):
         pygame.sprite.Sprite.__init__(self)
         self.image = bullet_img
         self.rect = self.image.get_rect()
         self.rect.midbottom = init_pos
         self.speed = 10 
-    def move (self):
+    def move(self):
         self.rect.top -= self.speed
 
 
@@ -100,6 +101,7 @@ player_rect.append(pygame.Rect(432, 624, 102, 126))
 player_pos = [200, 600]
 player = Player(plane_img, player_rect, player_pos)
 
+player_down_index = 16
 
 # Définir les paramètres liés à la surface utilisés par l'objet avion ennemi
 enemy1_rect = pygame.Rect(534, 612, 57, 43)
@@ -120,6 +122,11 @@ enemies_down = pygame.sprite.Group()
 
 bullet_sound = pygame.mixer.Sound('resources/sound/bullet.wav')
 bullet_sound.set_volume(0.3)
+
+game_over = pygame.image.load('resources/image/gameover.png')
+game_over_sound = pygame.mixer.Sound('resources/sound/game_over.wav')
+game_over_sound.set_volume(0.3)
+
 # Définir les paramètres liés à la surface utilisés par l'objet puce (bullets)
 bullet_rect = pygame.Rect(1004, 987, 9, 21)
 bullet_img = plane_img.subsurface(bullet_rect)
@@ -133,12 +140,20 @@ while running:
     clock.tick(45)
 
     # Draw the background
-    screen.fill (0)
-    screen.blit (background, (0, 0))
+    screen.fill(0)
+    screen.blit(background, (0, 0))
 
-    # Draw an airplane
-    # screen.blit (player, player_pos)
-    screen.blit(player.image[player.img_index], player.rect)
+    # dessiner l'avion du joueur
+    if not player.is_hit:
+        screen.blit(player.image[player.img_index], player.rect)
+        # Changer l'index de l'image pour animer l'avion
+        player.img_index = shoot_frequency // 8
+    else:
+        player.img_index = player_down_index // 8
+        screen.blit(player.image[player.img_index], player.rect)
+        player_down_index += 1
+        if player_down_index > 47:
+            running = False
 
     # Faire apparaître des avions ennemis : 
     if enemy_frequency % 50 == 0:
@@ -154,8 +169,13 @@ while running:
     # Déplacez l'avion ennemi, s'il dépasse la plage de la fenêtre, supprimez-le
     for enemy in enemies1:
         enemy.move()
-        if enemy.rect.top > SCREEN_HEIGHT:
+        # Déterminez si le joueur a été touché
+        if pygame.sprite.collide_circle(enemy, player):
+            enemies_down.add(enemy)
             enemies1.remove(enemy)
+            player.is_hit = True
+            game_over_sound.play()
+            break
     enemies1.draw(screen)
 
     # Ajoutez l'objet avion ennemi touché au groupe d'avions ennemis détruits, utilisé pour rendre l'animation de destruction
@@ -210,3 +230,12 @@ while running:
             player.moveLeft()
         if key_pressed[K_d] or key_pressed[K_RIGHT]:
             player.moveRight()
+
+screen.blit(game_over, (0, 0))
+
+while 1:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            exit()
+    pygame.display.update()
