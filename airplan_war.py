@@ -65,11 +65,12 @@ class Player (pygame.sprite.Sprite):
 
 # Enemy class
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, enemy_img, init_pos):
+    def __init__(self, enemy_img,enemy_down_imgs,init_pos):
         pygame.sprite.Sprite.__init__(self)
         self.image = enemy_img
         self.rect = self.image.get_rect()
         self.rect.topleft = init_pos
+        self.down_imgs = enemy_down_imgs
         self.speed = 2
         self.down_index = 0
 
@@ -106,6 +107,16 @@ enemy1_img = plane_img.subsurface(enemy1_rect)
 enemies1 = pygame.sprite.Group()
 enemy_frequency = 0
 
+enemy1_down_sound = pygame.mixer.Sound('resources/sound/enemy1_down.wav')
+enemy1_down_sound.set_volume(0.3)
+enemy1_down_imgs = []
+enemy1_down_imgs.append(plane_img.subsurface(pygame.Rect(267, 347, 57, 43)))
+enemy1_down_imgs.append(plane_img.subsurface(pygame.Rect(873, 697, 57, 43)))
+enemy1_down_imgs.append(plane_img.subsurface(pygame.Rect(267, 296, 57, 43)))
+enemy1_down_imgs.append(plane_img.subsurface(pygame.Rect(930, 697, 57, 43)))
+# Stockez des avions détruits pour le rendu d'animations de sprites d'épaves
+enemies_down = pygame.sprite.Group()
+
 
 bullet_sound = pygame.mixer.Sound('resources/sound/bullet.wav')
 bullet_sound.set_volume(0.3)
@@ -132,7 +143,9 @@ while running:
     # Faire apparaître des avions ennemis : 
     if enemy_frequency % 50 == 0:
         enemy1_pos = [random.randint(0, SCREEN_WIDTH -enemy1_rect.width), 0]
-        enemy1 = Enemy(enemy1_img, enemy1_pos)
+        enemy1 = Enemy(enemy1_img,
+                enemy1_down_imgs, #Ajouter ceci car on a modifie la classe Enemy
+                enemy1_pos)
         enemies1.add(enemy1)
     enemy_frequency += 1
     if enemy_frequency >= 100:
@@ -144,6 +157,22 @@ while running:
         if enemy.rect.top > SCREEN_HEIGHT:
             enemies1.remove(enemy)
     enemies1.draw(screen)
+
+    # Ajoutez l'objet avion ennemi touché au groupe d'avions ennemis détruits, utilisé pour rendre l'animation de destruction
+    enemies1_down = pygame.sprite.groupcollide(enemies1, player.bullets, 1, 1)
+    for enemy_down in enemies1_down:
+        enemies_down.add(enemy_down)
+
+    # Dessinez l'animation de l'épave
+    for enemy_down in enemies_down:
+        if enemy_down.down_index == 0:
+            enemy1_down_sound.play()
+        if enemy_down.down_index > 7:
+            enemies_down.remove(enemy_down)
+            # score += 1000
+            continue
+        screen.blit(enemy_down.down_imgs[enemy_down.down_index // 2], enemy_down.rect)
+        enemy_down.down_index += 1
 
     # Contrôler la fréquence des tirs de balles et des balles de feu
     if shoot_frequency % 15 == 0:
