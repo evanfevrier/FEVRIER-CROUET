@@ -34,6 +34,7 @@ class Player (pygame.sprite.Sprite):
             self.speed = 8 # Initialize the player speed, here is a definite value.
             self.img_index = 0 # Player Wizard Image Index
             self.bullets = pygame.sprite.Group() # Collection of bullets fired by the player's aircraft
+            self.bomb_count = 3
             self.is_hit = False # Is the player hit?
 
     def moveUp(self):
@@ -122,6 +123,8 @@ enemies_down = pygame.sprite.Group()
 
 bullet_sound = pygame.mixer.Sound('resources/sound/bullet.wav')
 bullet_sound.set_volume(0.3)
+bomb_sound = pygame.mixer.Sound('resources/sound/use_bomb.mp3')
+bomb_sound.set_volume(0.4)
 
 game_over = pygame.image.load('resources/image/gameover.png')
 game_over_sound = pygame.mixer.Sound('resources/sound/game_over.wav')
@@ -150,6 +153,10 @@ while running:
     text_rect = score_text.get_rect()
     text_rect.topleft = [10, 10]
     screen.blit(score_text, text_rect)
+    bombs_text = score_font.render(f"Bombes: {player.bomb_count}", True, (128, 128, 128))
+    bombs_rect = bombs_text.get_rect()
+    bombs_rect.topright = (SCREEN_WIDTH - 10, 10)
+    screen.blit(bombs_text, bombs_rect)
 
     # dessiner l'avion du joueur
     if not player.is_hit:
@@ -227,17 +234,24 @@ while running:
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
+        if event.type == pygame.KEYDOWN and event.key == K_b:
+            if player.bomb_count > 0:
+                player.bomb_count -= 1
+                for enemy in enemies1:
+                    enemies_down.add(enemy)
+                enemies1.empty()
+                bomb_sound.play()
 
-        # Monitor keyboard events
-        key_pressed = pygame.key.get_pressed()
-        if key_pressed[K_w] or key_pressed[K_UP]:
-            player.moveUp()
-        if key_pressed[K_s] or key_pressed[K_DOWN]:
-            player.moveDown()
-        if key_pressed[K_a] or key_pressed[K_LEFT]:
-            player.moveLeft()
-        if key_pressed[K_d] or key_pressed[K_RIGHT]:
-            player.moveRight()
+    # Monitor keyboard events
+    key_pressed = pygame.key.get_pressed()
+    if key_pressed[K_w] or key_pressed[K_UP]:
+        player.moveUp()
+    if key_pressed[K_s] or key_pressed[K_DOWN]:
+        player.moveDown()
+    if key_pressed[K_a] or key_pressed[K_LEFT]:
+        player.moveLeft()
+    if key_pressed[K_d] or key_pressed[K_RIGHT]:
+        player.moveRight()
 
 font = pygame.font.Font(None, 48)
 text = font.render('Score: '+ str(score), True, (255, 0, 0))
